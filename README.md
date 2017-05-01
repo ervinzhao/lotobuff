@@ -1,0 +1,2 @@
+# lotobuff
+Protobuff for lua
