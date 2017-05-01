@@ -143,6 +143,9 @@ static void field_to_stack(lua_State *L,
     }
 }
 
+bool table_to_message(lua_State *L, protobuf::Message *message)
+{}
+
 void message_to_table(lua_State *L, const protobuf::Message *message)
 {
     const protobuf::Descriptor *descriptor = message->GetDescriptor();
@@ -225,7 +228,39 @@ static int lotobuf_decode(lua_State *L) {
 }
 
 static int lotobuf_encode(lua_State *L) {
+    void *ud = luaL_checkudata(L, 1, meta_table_name);
+    ProtoCodec *codec = *((ProtoCodec **) ud);
 
+    const char *message_name = luaL_checkstring(L, 2);
+    const protobuf::Message *message_type = codec->getMessageType(message_name);
+    if(message_type == NULL) {
+        return luaL_error(L, "Unknown message: %s", message_name);
+    }
+
+    int ret = lua_istable(L, 3);
+    if(ret == 0) {
+        return luaL_error(L, "Unknown message: %s", message_name);
+    }
+    lua_settop(L, 3);
+    protobuf::Message *message = message_type->New();
+    bool result = table_to_message(L, message);
+
+    result = message->IsInitialized();
+    if(result == false) {
+        std::string err = message->InitializationErrorString();
+        return luaL_error(L, "Lost necessary field: ", err.c_str());
+    }
+
+    std::string output;
+    result = message->SerializeToString(&output);
+    lua_settop(L, 0);
+    if(result == false) {
+        lua_pushnil(L);
+    } else {
+        delete message;
+        lua_pushlstring(L, output.c_str(), output.length());
+    }
+    return 1;
 }
 
 
