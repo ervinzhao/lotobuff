@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "proto_codec.h"
+#include "src/proto_codec.h"
 
 const char *protoFileName = "/home/zhaohongjian/workspace/lotobuf/examples/addressbook.proto";
 const char *dataFileName = "/home/zhaohongjian/workspace/lotobuf/examples/sample.data";

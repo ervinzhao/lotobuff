@@ -10,7 +10,7 @@ clean:
 
 test_loto: src/proto_codec.h src/proto_codec.cpp test/test.cpp
 	pkg-config --cflags protobuf  # fails if protobuf is not installed
-	c++ src/proto_codec.cpp test/test.cpp -o test_loto `pkg-config --cflags --libs protobuf`
+	c++ -I. src/proto_codec.cpp test/test.cpp -o test_loto `pkg-config --cflags --libs protobuf`
 
 lotobuf: src/lotobuf.cpp src/proto_codec.h src/proto_codec.cpp
 	pkg-config --cflags protobuf  # fails if protobuf is not installed
