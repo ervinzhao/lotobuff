@@ -8,6 +8,7 @@ extern "C" {
 
 const char *meta_table_name = "lotobuf.ProtoCodec";
 static void message_to_table(lua_State *L, const protobuf::Message *message);
+static bool table_to_message(lua_State *L, protobuf::Message *message);
 
 static void simple_field_to_stack(lua_State *L,
                                   const protobuf::Message *message,
@@ -143,8 +144,71 @@ static void field_to_stack(lua_State *L,
     }
 }
 
-bool table_to_message(lua_State *L, protobuf::Message *message)
+void simple_field_to_message(lua_State *L,
+                             protobuf::Message *message,
+                             const protobuf::FieldDescriptor *field,
+                             const protobuf::Reflection *reflection,
+                             bool repeated)
 {}
+
+void field_to_message(lua_State *L,
+                      protobuf::Message *message,
+                      const protobuf::FieldDescriptor *field,
+                      const protobuf::Reflection *reflection)
+{
+    protobuf::FieldDescriptor::Type field_type = field->type();
+    if(field->is_repeated()) {
+        if(lua_istable(L, -1)) {
+            int count = lua_objlen(L, -1);
+            for(int i = 0; i < count; i++) {
+                lua_pushinteger(L, i + 1);
+                lua_gettable(L, -2);
+                if(field_type == protobuf::FieldDescriptor::TYPE_GROUP
+                        || field_type == protobuf::FieldDescriptor::TYPE_MESSAGE) {
+                    protobuf::Message *sub_message =
+                            reflection->MutableRepeatedMessage(message, field, i);
+                    table_to_message(L, sub_message);
+                } else {
+                    simple_field_to_message(L, message, field, reflection, true);
+                }
+            }
+        } else {
+            protobuf::Message *sub_message =
+                    reflection->MutableRepeatedMessage(message, field, 0);
+            table_to_message(L, sub_message);
+        }
+    } else {
+        if(field_type == protobuf::FieldDescriptor::TYPE_GROUP
+                || field_type == protobuf::FieldDescriptor::TYPE_MESSAGE) {
+            protobuf::Message *sub_message =
+                    reflection->MutableMessage(message, field);
+            table_to_message(L, sub_message);
+        } else {
+            simple_field_to_message(L, message, field, reflection, false);
+        }
+    }
+}
+
+bool table_to_message(lua_State *L, protobuf::Message *message)
+{
+    const protobuf::Descriptor *descriptor = message->GetDescriptor();
+    const protobuf::Reflection *reflection = message->GetReflection();
+    int count = descriptor->field_count();
+    for(int i = 0; i < count; i ++) {
+        const protobuf::FieldDescriptor *field = descriptor->field(i);
+        const std::string &field_name = field->name();
+
+        int top = lua_gettop(L);
+        lua_pushstring(L, field_name.c_str());
+        lua_gettable(L, -2);
+        if(lua_isnil(L, -1)) {
+
+        } else {
+            field_to_message(L, message, field, reflection);
+        }
+        lua_settop(L, top);
+    }
+}
 
 void message_to_table(lua_State *L, const protobuf::Message *message)
 {
@@ -153,7 +217,7 @@ void message_to_table(lua_State *L, const protobuf::Message *message)
     int count = descriptor->field_count();
     for(int i = 0; i < count; i ++) {
         const protobuf::FieldDescriptor *field = descriptor->field(i);
-        const std::string field_name = field->name();
+        const std::string &field_name = field->name();
         lua_pushstring(L, field_name.c_str());
         field_to_stack(L, message, field, reflection);
         lua_settable(L, -3);
