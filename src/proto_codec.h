@@ -12,10 +12,15 @@
 
 class ErrorCollector : public google::protobuf::compiler::MultiFileErrorCollector
 {
-    public:
-        ErrorCollector()  {}
-        ~ErrorCollector() {}
-        void AddError(const std::string & filename, int line, int column, const std::string & message);
+private:
+    std::string m_error;
+    bool m_used;
+public:
+    ErrorCollector()  { m_used = false; }
+    ~ErrorCollector() {}
+    void reset() { m_used = false; }
+    const std::string &lastError() { return m_error; }
+    void AddError(const std::string & filename, int line, int column, const std::string & message);
 };
 
 using namespace google;
@@ -31,6 +36,7 @@ public:
     protobuf::Message *decode(const protobuf::Message *messageBase,
                               const std::string &messageContent);
     bool encode(protobuf::Message *message, std::string *output);
+    const std::string &lastError() { return m_ec.lastError(); }
 
 private:
     protobuf::compiler::DiskSourceTree m_dst;

@@ -190,8 +190,14 @@ static int lotobuf_load(lua_State *L) {
     const char *filename = luaL_checkstring(L, 2);
     bool ret = codec->load(filename);
     int b = ret ? 1:0;
+    int rcount = 1;
     lua_pushboolean(L, b);
-    return 1;
+    if(ret == false) {
+        const std::string &err = codec->lastError();
+        lua_pushstring(L, err.c_str());
+        rcount ++;
+    }
+    return rcount;
 }
 
 

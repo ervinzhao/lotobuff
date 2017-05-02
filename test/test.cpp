@@ -4,12 +4,15 @@
 
 #include "src/proto_codec.h"
 
-const char *protoFileName = "/home/zhaohongjian/workspace/lotobuf/examples/addressbook.proto";
-const char *dataFileName = "/home/zhaohongjian/workspace/lotobuf/examples/sample.data";
+const char *protoFileName = "addressbook.proto";
 
 int main(int argc, char *argv[]) {
     ProtoCodec loto;
-    loto.load(protoFileName);
+    loto.map("", "examples/");
+    bool result = loto.load(protoFileName);
+    if(result == false) {
+        std::cout<<loto.lastError()<<std::endl;
+    }
     return 0;
 }
 

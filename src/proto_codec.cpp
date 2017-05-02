@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "proto_codec.h"
 
 ProtoCodec::ProtoCodec()
@@ -20,19 +21,23 @@ void ProtoCodec::map(const std::string &vpath, const std::string &dpath)
 
 bool ProtoCodec::load(const char *filename)
 {
+    m_ec.reset();
+    bool result;
     m_fileDescriptor = m_importer.Import(filename);
     if(m_fileDescriptor == NULL) {
-        return false;
-    }
-    int count = m_fileDescriptor->message_type_count();
-    for(int i = 0; i < count; i++) {
-        const protobuf::Descriptor *d = m_fileDescriptor->message_type(i);
-        const protobuf::Message *messageBase = m_messageFactory.GetPrototype(d);
+        result = false;
+    } else {
+        int count = m_fileDescriptor->message_type_count();
+        for(int i = 0; i < count; i++) {
+            const protobuf::Descriptor *d = m_fileDescriptor->message_type(i);
+            const protobuf::Message *messageBase = m_messageFactory.GetPrototype(d);
 
-        const std::string &name = d->name();
-        m_messagePool[name] = messageBase;
+            const std::string &name = d->name();
+            m_messagePool[name] = messageBase;
+        }
+        result = true;
     }
-    return true;
+    return result;
 }
 
 const google::protobuf::Message *ProtoCodec::getMessageType(const char *messageName)
@@ -70,5 +75,14 @@ bool ProtoCodec::encode(protobuf::Message *message, std::__cxx11::string *output
 
 void ErrorCollector::AddError(const std::__cxx11::string &filename, int line, int column, const std::__cxx11::string &message)
 {
-    std::cout<<"line: "<<line<<" column: "<<column <<" error: "<<message<<std::endl;
+    if(m_used == false) {
+        m_used = true;
+        if(line == -1) {
+            m_error = message;
+        } else {
+            std::stringstream ss;
+            ss<<"Line: "<<line<<", Column: "<<column<<", "<<message<<"\n";
+            m_error = ss.str();
+        }
+    }
 }
