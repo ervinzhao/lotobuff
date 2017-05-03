@@ -148,8 +148,129 @@ void simple_field_to_message(lua_State *L,
                              protobuf::Message *message,
                              const protobuf::FieldDescriptor *field,
                              const protobuf::Reflection *reflection,
-                             bool repeated)
-{}
+                             bool repeated,
+                             int index)
+{
+    bool success = true;
+
+    protobuf::FieldDescriptor::Type field_type = field->type();
+    switch(field_type) {
+    case protobuf::FieldDescriptor::TYPE_BOOL:
+        if(lua_isboolean(L, -1)) {
+            int ret = lua_toboolean(L, -1);
+            bool value = ret?true:false;
+            if(repeated) {
+                reflection->SetRepeatedBool(message, field, index, value);
+            } else {
+                reflection->SetBool(message, field, value);
+            }
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_STRING:
+    case protobuf::FieldDescriptor::TYPE_BYTES:
+        if(lua_isstring(L, -1)) {
+            size_t len;
+            const char *str = lua_tolstring(L, -1, &len);
+            std::string content(str, len);
+            if(repeated) {
+                reflection->SetRepeatedString(message, field, index, content);
+            } else {
+                reflection->SetString(message, field, content);
+            }
+        } else {
+            success = false;
+        }
+        break;
+
+    case protobuf::FieldDescriptor::TYPE_INT32:
+    case protobuf::FieldDescriptor::TYPE_SINT32:
+    case protobuf::FieldDescriptor::TYPE_FIXED32:
+    case protobuf::FieldDescriptor::TYPE_SFIXED32:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedInt32(message, field, index, (int32_t)number);
+            else
+                reflection->SetInt32(message, field, (int32_t) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_INT64:
+    case protobuf::FieldDescriptor::TYPE_SINT64:
+    case protobuf::FieldDescriptor::TYPE_FIXED64:
+    case protobuf::FieldDescriptor::TYPE_SFIXED64:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedInt64(message, field, index, (int64_t)number);
+            else
+                reflection->SetInt64(message, field, (int64_t) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_UINT32:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedUInt32(message, field, index, (uint32_t)number);
+            else
+                reflection->SetUInt32(message, field, (uint32_t) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_UINT64:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedUInt64(message, field, index, (uint64_t)number);
+            else
+                reflection->SetUInt64(message, field, (uint64_t) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_FLOAT:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedFloat(message, field, index, (float)number);
+            else
+                reflection->SetFloat(message, field, (float) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_DOUBLE:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedDouble(message, field, index, (double)number);
+            else
+                reflection->SetDouble(message, field, (double) number);
+        } else {
+            success = false;
+        }
+        break;
+    case protobuf::FieldDescriptor::TYPE_ENUM:
+        if(lua_isnumber(L, -1)) {
+            lua_Number number = lua_tonumber(L, -1);
+            if(repeated)
+                reflection->SetRepeatedEnumValue(message, field, index, (int)number);
+            else
+                reflection->SetEnumValue(message, field, (int) number);
+        } else {
+            success = false;
+        }
+        break;
+
+    }
+    lua_pop(L, 1);
+}
 
 void field_to_message(lua_State *L,
                       protobuf::Message *message,
@@ -163,13 +284,17 @@ void field_to_message(lua_State *L,
             for(int i = 0; i < count; i++) {
                 lua_pushinteger(L, i + 1);
                 lua_gettable(L, -2);
+                if(lua_isnil(L, -1)) {
+                    lua_pop(L, 1);
+                    break;
+                }
                 if(field_type == protobuf::FieldDescriptor::TYPE_GROUP
                         || field_type == protobuf::FieldDescriptor::TYPE_MESSAGE) {
                     protobuf::Message *sub_message =
                             reflection->MutableRepeatedMessage(message, field, i);
                     table_to_message(L, sub_message);
                 } else {
-                    simple_field_to_message(L, message, field, reflection, true);
+                    simple_field_to_message(L, message, field, reflection, true, i);
                 }
             }
         } else {
@@ -184,7 +309,7 @@ void field_to_message(lua_State *L,
                     reflection->MutableMessage(message, field);
             table_to_message(L, sub_message);
         } else {
-            simple_field_to_message(L, message, field, reflection, false);
+            simple_field_to_message(L, message, field, reflection, false, 0);
         }
     }
 }
@@ -208,6 +333,7 @@ bool table_to_message(lua_State *L, protobuf::Message *message)
         }
         lua_settop(L, top);
     }
+    lua_pop(L, 1);
 }
 
 void message_to_table(lua_State *L, const protobuf::Message *message)
