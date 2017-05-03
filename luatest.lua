@@ -20,3 +20,9 @@ print(result)
 print(err)
 
 print(cjson.encode(result))
+
+local data2 = loto:encode('AddressBook', result)
+
+local result2, err = loto:decode('AddressBook', data2)
+print(cjson.encode(result2))
+
