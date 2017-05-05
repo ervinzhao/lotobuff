@@ -14,4 +14,4 @@ test_loto: src/proto_codec.h src/proto_codec.cpp test/test.cpp
 
 lotobuf: src/lotobuf.cpp src/proto_codec.h src/proto_codec.cpp
 	pkg-config --cflags protobuf  # fails if protobuf is not installed
-	c++ -ggdb3 src/proto_codec.cpp src/lotobuf.cpp -shared -fPIC -o lotobuf.so `pkg-config --cflags --libs protobuf`
+	c++ --std=c++11 -ggdb3 src/proto_codec.cpp src/lotobuf.cpp -shared -fPIC -o lotobuf.so `pkg-config --cflags --libs protobuf`

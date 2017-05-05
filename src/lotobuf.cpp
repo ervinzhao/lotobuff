@@ -4,6 +4,7 @@ extern "C" {
 #include <luajit-2.0/lua.h>
 #include <luajit-2.0/lauxlib.h>
 }
+#include <memory>
 #include <sstream>
 #include "proto_codec.h"
 
@@ -203,7 +204,7 @@ bool simple_field_to_message(lua_State *L,
             int ret = lua_toboolean(L, -1);
             bool value = ret?true:false;
             if(repeated) {
-                reflection->SetRepeatedBool(message, field, index, value);
+                reflection->AddBool(message, field, index);
             } else {
                 reflection->SetBool(message, field, value);
             }
@@ -219,7 +220,7 @@ bool simple_field_to_message(lua_State *L,
             const char *str = lua_tolstring(L, -1, &len);
             std::string content(str, len);
             if(repeated) {
-                reflection->SetRepeatedString(message, field, index, content);
+                reflection->AddString(message, field, content);
             } else {
                 reflection->SetString(message, field, content);
             }
@@ -236,7 +237,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedInt32(message, field, index, (int32_t)number);
+                reflection->AddInt32(message, field, (int32_t)number);
             else
                 reflection->SetInt32(message, field, (int32_t) number);
         } else {
@@ -251,7 +252,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedInt64(message, field, index, (int64_t)number);
+                reflection->AddInt64(message, field, (int64_t)number);
             else
                 reflection->SetInt64(message, field, (int64_t) number);
         } else {
@@ -263,7 +264,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedUInt32(message, field, index, (uint32_t)number);
+                reflection->AddUInt32(message, field, (uint32_t)number);
             else
                 reflection->SetUInt32(message, field, (uint32_t) number);
         } else {
@@ -275,7 +276,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedUInt64(message, field, index, (uint64_t)number);
+                reflection->AddUInt64(message, field, (uint64_t)number);
             else
                 reflection->SetUInt64(message, field, (uint64_t) number);
         } else {
@@ -287,7 +288,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedFloat(message, field, index, (float)number);
+                reflection->AddFloat(message, field, (float)number);
             else
                 reflection->SetFloat(message, field, (float) number);
         } else {
@@ -299,7 +300,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedDouble(message, field, index, (double)number);
+                reflection->AddDouble(message, field, (double)number);
             else
                 reflection->SetDouble(message, field, (double) number);
         } else {
@@ -311,7 +312,7 @@ bool simple_field_to_message(lua_State *L,
         if(lua_isnumber(L, -1)) {
             lua_Number number = lua_tonumber(L, -1);
             if(repeated)
-                reflection->SetRepeatedEnumValue(message, field, index, (int)number);
+                reflection->AddEnumValue(message, field, (int)number);
             else
                 reflection->SetEnumValue(message, field, (int) number);
         } else {
@@ -479,7 +480,7 @@ static int lotobuf_decode(lua_State *L) {
     if(message_type == NULL) {
         lua_settop(L, 0);
         lua_pushnil(L);
-        lua_pushstring(L, "unknown message");
+        lua_pushstring(L, "Unknown message");
         return 2;
     }
 
@@ -517,9 +518,10 @@ static int lotobuf_encode(lua_State *L) {
         return luaL_error(L, "Unknown message: %s", message_name);
     }
     lua_settop(L, 3);
-    protobuf::Message *message = message_type->New();
+    std::unique_ptr<protobuf::Message> message
+            (message_type->New());
     std::string error_output;
-    bool result = table_to_message(L, message, &error_output);
+    bool result = table_to_message(L, message.get(), &error_output);
     if(result == false) {
         lua_pushnil(L);
         lua_pushstring(L, error_output.c_str());
@@ -532,16 +534,18 @@ static int lotobuf_encode(lua_State *L) {
         return luaL_error(L, "Lost necessary field: ", err.c_str());
     }
 
+    int count = 1;
     std::string output;
     result = message->SerializeToString(&output);
     lua_settop(L, 0);
     if(result == false) {
         lua_pushnil(L);
+        lua_pushstring(L, "Unknown error.");
+        count ++;
     } else {
-        delete message;
         lua_pushlstring(L, output.c_str(), output.length());
     }
-    return 1;
+    return count;
 }
 
 

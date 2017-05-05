@@ -52,7 +52,7 @@ const google::protobuf::Message *ProtoCodec::getMessageType(const char *messageN
 }
 
 protobuf::Message *ProtoCodec::decode(const protobuf::Message *messageBase,
-                                              const std::__cxx11::string &messageContent)
+                                              const std::string &messageContent)
 {
     protobuf::Message *message = messageBase->New();
     bool ret = message->ParseFromString(messageContent);
@@ -63,7 +63,7 @@ protobuf::Message *ProtoCodec::decode(const protobuf::Message *messageBase,
     return message;
 }
 
-bool ProtoCodec::encode(protobuf::Message *message, std::__cxx11::string *output)
+bool ProtoCodec::encode(protobuf::Message *message, std::string *output)
 {
     bool ret = message->IsInitialized();
     if(ret == false)
@@ -73,7 +73,7 @@ bool ProtoCodec::encode(protobuf::Message *message, std::__cxx11::string *output
 }
 
 
-void ErrorCollector::AddError(const std::__cxx11::string &filename, int line, int column, const std::__cxx11::string &message)
+void ErrorCollector::AddError(const std::string &filename, int line, int column, const std::__cxx11::string &message)
 {
     if(m_used == false) {
         m_used = true;
