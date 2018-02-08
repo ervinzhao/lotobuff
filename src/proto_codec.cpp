@@ -13,6 +13,8 @@ ProtoCodec::~ProtoCodec()
 
 }
 
+ProtoCodec *ProtoCodec::s_codec = NULL;
+
 void ProtoCodec::map(const std::string &vpath, const std::string &dpath)
 {
     m_dst.MapPath(vpath, dpath);
@@ -73,7 +75,7 @@ bool ProtoCodec::encode(protobuf::Message *message, std::string *output)
 }
 
 
-void ErrorCollector::AddError(const std::string &filename, int line, int column, const std::__cxx11::string &message)
+void ErrorCollector::AddError(const std::string &filename, int line, int column, const std::string &message)
 {
     if(m_used == false) {
         m_used = true;

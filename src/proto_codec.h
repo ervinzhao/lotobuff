@@ -48,6 +48,15 @@ private:
 
     typedef std::map<const std::string, const protobuf::Message *> MessagePoolType;
     MessagePoolType m_messagePool;
+
+    static ProtoCodec *s_codec;
+public:
+    static ProtoCodec *getCodec() {
+        if(s_codec == NULL) {
+            s_codec = new ProtoCodec;
+        }
+        return s_codec;
+    }
 };
 
 #endif // _PROTO_CODEC_H_

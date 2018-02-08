@@ -433,7 +433,7 @@ void message_to_table(lua_State *L, const protobuf::Message *message)
 static int lotobuf_new(lua_State *L) {
     lua_settop(L, 0);
 
-    ProtoCodec *codec = new ProtoCodec;
+    ProtoCodec *codec = ProtoCodec::getCodec();
     void * ud = lua_newuserdata(L, sizeof(codec));
     *((ProtoCodec **) ud) = codec;
 
