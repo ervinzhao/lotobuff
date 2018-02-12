@@ -21,6 +21,7 @@ public:
     void reset() { m_used = false; }
     const std::string &lastError() { return m_error; }
     void AddError(const std::string & filename, int line, int column, const std::string & message);
+    void AddWarning(const std::string & filename, int line, int column, const std::string & message);
 };
 
 using namespace google;

@@ -34,7 +34,8 @@ bool ProtoCodec::load(const char *filename)
             const protobuf::Descriptor *d = m_fileDescriptor->message_type(i);
             const protobuf::Message *messageBase = m_messageFactory.GetPrototype(d);
 
-            const std::string &name = d->name();
+            const std::string &name = d->full_name();
+            std::cout<<name<<std::endl;
             m_messagePool[name] = messageBase;
         }
         result = true;
@@ -87,4 +88,7 @@ void ErrorCollector::AddError(const std::string &filename, int line, int column,
             m_error = ss.str();
         }
     }
+}
+void ErrorCollector::AddWarning(const std::string & filename, int line, int column, const std::string & message)
+{
 }

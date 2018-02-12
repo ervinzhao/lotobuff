@@ -15,14 +15,14 @@ end
 local datafile = io.open('./examples/output.data', 'r')
 data = datafile:read('*a')
 
-local result, err = loto:decode('AddressBook', data)
+local result, err = loto:decode('tutorial.AddressBook', data)
 print(result)
 print(err)
 
 print(cjson.encode(result))
 
-local data2 = loto:encode('AddressBook', result)
+local data2 = loto:encode('tutorial.AddressBook', result)
 
-local result2, err = loto:decode('AddressBook', data2)
+local result2, err = loto:decode('tutorial.AddressBook', data2)
 print(cjson.encode(result2))
 
