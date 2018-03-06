@@ -518,11 +518,11 @@ static int lotobuf_encode(lua_State *L) {
         return luaL_error(L, "Unknown message: %s", message_name);
     }
     lua_settop(L, 3);
-    std::unique_ptr<protobuf::Message> message
-            (message_type->New());
+    protobuf::Message *message = message_type->New();
     std::string error_output;
-    bool result = table_to_message(L, message.get(), &error_output);
+    bool result = table_to_message(L, message, &error_output);
     if(result == false) {
+        delete message;
         lua_pushnil(L);
         lua_pushstring(L, error_output.c_str());
         return 2;
@@ -530,6 +530,7 @@ static int lotobuf_encode(lua_State *L) {
 
     result = message->IsInitialized();
     if(result == false) {
+        delete message;
         std::string err = message->InitializationErrorString();
         return luaL_error(L, "Lost necessary field: ", err.c_str());
     }
@@ -545,6 +546,7 @@ static int lotobuf_encode(lua_State *L) {
     } else {
         lua_pushlstring(L, output.c_str(), output.length());
     }
+    delete message;
     return count;
 }
 
