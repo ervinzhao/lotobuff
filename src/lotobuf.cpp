@@ -420,15 +420,18 @@ void message_to_table(lua_State *L, const protobuf::Message *message)
 {
     const protobuf::Descriptor *descriptor = message->GetDescriptor();
     const protobuf::Reflection *reflection = message->GetReflection();
-    int count = descriptor->field_count();
-    for(int i = 0; i < count; i ++) {
-        const protobuf::FieldDescriptor *field = descriptor->field(i);
+
+    std::vector<const FieldDescriptor*> fields;
+    reflection->ListFields(message, &fields);
+
+    std::size_t count = fields.size();
+    const protobuf::FieldDescriptor *field; 
+    for(std::size_t i = 0; i < count; i ++) {
+        field = fields[i];
         const std::string &field_name = field->name();
-        if(descriptor->HasField(*message, field)) {
-            lua_pushstring(L, field_name.c_str());
-            field_to_stack(L, message, field, reflection);
-            lua_settable(L, -3);
-        }
+        lua_pushstring(L, field_name.c_str());
+        field_to_stack(L, message, field, reflection);
+        lua_settable(L, -3);
     }
 }
 
