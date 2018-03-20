@@ -421,8 +421,8 @@ void message_to_table(lua_State *L, const protobuf::Message *message)
     const protobuf::Descriptor *descriptor = message->GetDescriptor();
     const protobuf::Reflection *reflection = message->GetReflection();
 
-    std::vector<const FieldDescriptor*> fields;
-    reflection->ListFields(message, &fields);
+    std::vector<const protobuf::FieldDescriptor*> fields;
+    reflection->ListFields(*message, &fields);
 
     std::size_t count = fields.size();
     const protobuf::FieldDescriptor *field; 
