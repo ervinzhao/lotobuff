@@ -424,9 +424,11 @@ void message_to_table(lua_State *L, const protobuf::Message *message)
     for(int i = 0; i < count; i ++) {
         const protobuf::FieldDescriptor *field = descriptor->field(i);
         const std::string &field_name = field->name();
-        lua_pushstring(L, field_name.c_str());
-        field_to_stack(L, message, field, reflection);
-        lua_settable(L, -3);
+        if(descriptor->HasField(*message, field)) {
+            lua_pushstring(L, field_name.c_str());
+            field_to_stack(L, message, field, reflection);
+            lua_settable(L, -3);
+        }
     }
 }
 
